@@ -12,8 +12,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TV en Vivo',
-      theme: ThemeData.dark(),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.indigo,
+        scaffoldBackgroundColor: Colors.grey[900],
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+        ),
+      ),
       home: const StreamMenuPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -21,45 +30,72 @@ class MyApp extends StatelessWidget {
 class StreamMenuPage extends StatelessWidget {
   const StreamMenuPage({super.key});
 
-  final List<Map<String, String>> streams = const [
+  static const List<Map<String, String>> streams = [
     {
       'title': 'Andorra TV (1080p)',
       'url': 'https://live-edge-eu-1.cdn.enetres.net/56495F77FD124FECA75590A906965F2C022/live-3000/index.m3u8',
     },
     {
-      'title': 'ATV (720p)',
-      'url': 'https://videos.rtva.ad/live/rtva/playlist.m3u8',
+      'title': 'TVE La 1 (España)',
+      'url': 'https://rtvelivestream.akamaized.net/rtve/la1_main_dvr.m3u8',
+    },
+    {
+      'title': 'Canal 24h RTVE',
+      'url': 'https://rtvelivestream.akamaized.net/rtve/24h_main_dvr.m3u8',
+    },
+    {
+      'title': 'Aragón TV',
+      'url': 'https://cdnlive.shooowit.net/aragontelevision/live.stream/index.m3u8',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Canales de TV en Vivo')),
-      body: ListView.builder(
+      appBar: AppBar(title: const Text('📺 Canales de TV en Vivo')),
+      body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: streams.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final stream = streams[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-              onPressed: () {
+          return Card(
+            color: Colors.indigo[700],
+            elevation: 6,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              leading: const Icon(Icons.live_tv, size: 32, color: Colors.white),
+              title: Text(
+                stream['title']!,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              trailing: const Icon(Icons.play_circle_outline, size: 30, color: Colors.white),
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VideoPage(
+                    builder: (_) => VideoPage(
                       title: stream['title']!,
                       videoUrl: stream['url']!,
                     ),
                   ),
                 );
               },
-              child: Text(stream['title']!, style: const TextStyle(fontSize: 18)),
             ),
           );
         },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.black,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Text(
+            'App creada por Danna 💻',
+            style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ),
     );
   }
@@ -81,15 +117,17 @@ class VideoPage extends StatefulWidget {
 
 class _VideoPageState extends State<VideoPage> {
   late VideoPlayerController _controller;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
-    // Usamos networkUrl con la URL en formato Uri
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
+      }).catchError((error) {
+        setState(() => _hasError = true);
       });
   }
 
@@ -104,25 +142,31 @@ class _VideoPageState extends State<VideoPage> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Center(
-        child: _controller.value.isInitialized
-            ? AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              )
-            : const CircularProgressIndicator(),
+        child: _hasError
+            ? const Text('❌ Error al cargar el canal')
+            : _controller.value.isInitialized
+                ? AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  )
+                : const CircularProgressIndicator(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _controller.value.isPlaying
-                ? _controller.pause()
-                : _controller.play();
-          });
-        },
-        child: Icon(
-          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
-      ),
+      floatingActionButton: _controller.value.isInitialized
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                });
+              },
+              child: Icon(
+                _controller.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+              ),
+            )
+          : null,
     );
   }
 }

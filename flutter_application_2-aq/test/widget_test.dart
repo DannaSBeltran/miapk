@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_application_2/main.dart'; // Asegúrate de que el nombre del paquete es correcto
+import 'package:flutter_application_2_aq/main.dart';  // Notar que el guión "-" se cambia por un guión bajo "_"
+// Asegúrate de que el nombre del paquete es correcto
 
 void main() {
   testWidgets('Test de la aplicación de streaming', (WidgetTester tester) async {
