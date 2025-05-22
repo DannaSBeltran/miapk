@@ -91,7 +91,7 @@ class StreamMenuPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Text(
-            'App creada por Danna 💻',
+            
             style: TextStyle(color: Colors.grey[400], fontSize: 14),
             textAlign: TextAlign.center,
           ),
